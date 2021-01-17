@@ -1,0 +1,418 @@
+---
+title: "Assignment_2_1821_twu38.pdf"
+author: "Tianqi Wu"
+date: "9/25/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE,include=FALSE}
+library(glmnet)  # glmnet for lasso
+library(ggplot2)  # qplot
+library(gridExtra)  # grid.arrange,
+set.seed(1821)
+```
+
+```{r full, echo=FALSE}
+full = function(){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    full.model = lm(Y ~ ., data = myData[-test.id,])
+    Ytest.pred = predict(full.model, newdata = myData[test.id,])
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    size[t] = p
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r AIC.F, echo=FALSE}
+AIC.F = function(){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    full.model = lm(Y ~ ., data = myData[-test.id, ])
+    stepAIC = step(lm(Y ~ 1, data = myData[-test.id, ]), 
+                   list(upper = full.model),
+                   trace = 0, direction = "forward")
+    Ytest.pred = predict(stepAIC, newdata = myData[test.id, ])
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    # number of predictors (excluding the intercept)
+    size[t] = length(stepAIC$coef) - 1  
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r AIC.B, echo=FALSE}
+AIC.B = function(){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    full.model = lm(Y ~ ., data = myData[-test.id, ])
+    stepAIC = step(full.model, trace = 0, direction = "backward")
+    Ytest.pred = predict(stepAIC, newdata = myData[test.id, ])
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    # number of predictors (excluding the intercept)
+    size[t] = length(stepAIC$coef) - 1  
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r BIC.F, echo=FALSE}
+BIC.F = function(){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    full.model = lm(Y ~ ., data = myData[-test.id, ])
+    stepAIC = step(lm(Y ~ 1, data = myData[-test.id, ]),
+                 list(upper = full.model),
+                 trace = 0, direction = "forward", k = log(ntrain))
+    Ytest.pred = predict(stepAIC, newdata = myData[test.id, ])
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    # number of predictors (excluding the intercept)
+    size[t] = length(stepAIC$coef) - 1  
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r BIC.B, echo=FALSE}
+BIC.B = function(){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    full.model = lm(Y ~ ., data = myData[-test.id, ])
+    stepAIC = step(full.model, trace = 0,
+                 direction = "backward", k = log(ntrain))
+    Ytest.pred = predict(stepAIC, newdata = myData[test.id, ])
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    # number of predictors (excluding the intercept)
+    size[t] = length(stepAIC$coef) - 1  
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r R_min, echo=FALSE}
+R_min = function(L_min,L_max){
+  pse = c()
+  size = c()
+  total_time = 0
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    start.time = proc.time()
+    cv.out = cv.glmnet(X[-test.id, ], Y[-test.id],alpha = 0,
+                       lambda=seq(exp(L_min),exp(L_max),length.out=100))
+    best.lam = cv.out$lambda.min
+    Ytest.pred = predict(cv.out, s = best.lam, newx = X[test.id, ])
+    time = proc.time() - start.time
+    total_time = total_time + time[1]
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    # Exclude the computation for DF when recording computing time for Ridge,
+
+    ntrain = n - dim(all.test.id)[1]
+    tmpX = scale(X[-test.id, ]) * sqrt(ntrain / (ntrain - 1))
+    d = svd(tmpX)$d 
+    
+    # df for Ridge with lambda_min
+    best.lam = cv.out$lambda.min
+    size[t] = sum(d^2/(d^2 + best.lam*ntrain))
+  }
+  result = list(pse = pse,size = size,time = total_time)
+  return(result)
+}
+```
+
+```{r R_1se, echo=FALSE}
+R_1se = function(L_min,L_max){
+  pse = c()
+  size = c()
+  total_time = 0
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    start.time = proc.time()
+    cv.out = cv.glmnet(X[-test.id, ], Y[-test.id],alpha = 0,
+                       lambda=seq(exp(L_min),exp(L_max),length.out=100))
+    best.lam = cv.out$lambda.1se
+    Ytest.pred = predict(cv.out, s = best.lam, newx = X[test.id, ])
+    time = proc.time() - start.time
+    total_time = total_time + time[1]
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    # Exclude the computation for DF when recording computing time for Ridge,
+
+    ntrain = n - dim(all.test.id)[1]
+    tmpX = scale(X[-test.id, ]) * sqrt(ntrain / (ntrain - 1))
+    d = svd(tmpX)$d 
+    
+    # df for Ridge with lambda_1se
+    best.lam = cv.out$lambda.1se
+    size[t] = sum(d^2/(d^2 + best.lam*ntrain))
+  }
+  result = list(pse = pse,size = size,time = total_time)
+  return(result)
+}
+```
+
+```{r L_min, echo=FALSE}
+L_min = function(L_min,L_max){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    cv.out = cv.glmnet(X[-test.id, ], Y[-test.id],alpha = 1,
+                       lambda=seq(exp(L_min),exp(L_max),length.out = 100))
+    best.lam = cv.out$lambda.min
+    Ytest.pred = predict(cv.out, s = best.lam, newx = X[test.id, ])
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    mylasso.coef = predict(cv.out, s = best.lam, type = "coefficients")
+    size[t] = sum(mylasso.coef != 0) - 1  # size of Lasso with lambda.min
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r L_1se, echo=FALSE}
+L_1se = function(L_min,L_max){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t] 
+    cv.out = cv.glmnet(X[-test.id, ], Y[-test.id],alpha = 1,
+                       lambda=seq(exp(L_min),exp(L_max),length.out = 100))
+    best.lam = cv.out$lambda.1se
+    Ytest.pred = predict(cv.out, s = best.lam, newx = X[test.id, ])
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    mylasso.coef = predict(cv.out, s = best.lam, type = "coefficients")
+    size[t] = sum(mylasso.coef != 0) - 1  # size of Lasso with lambda.min
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r L_Refit, echo=FALSE}
+L_Refit = function(L_min,L_max){
+  start.time = proc.time()
+  pse = c()
+  size = c()
+  for(t in 1:N){
+    test.id = all.test.id[, t]
+    cv.out = cv.glmnet(X[-test.id, ], Y[-test.id],alpha = 1,
+                       lambda=seq(exp(L_min),exp(L_max),length.out = 100))
+    best.lam = cv.out$lambda.1se
+    mylasso.coef = predict(cv.out, s = best.lam, type = "coefficients")
+    var.sel = row.names(mylasso.coef)[nonzeroCoef(mylasso.coef)[-1]]
+    tmp.X = X[, colnames(X) %in% var.sel]
+    mylasso.refit = coef(lm(Y[-test.id] ~ tmp.X[-test.id, ]))
+    Ytest.pred = mylasso.refit[1] + tmp.X[test.id,] %*% mylasso.refit[-1]
+    pse[t] = mean((Y[test.id] - Ytest.pred)^2)
+    mylasso.coef = predict(cv.out, s = best.lam, type = "coefficients")
+    size[t] = sum(mylasso.coef != 0) - 1  # size of Lasso with lambda.min
+    }
+  time = proc.time() - start.time
+  result = list(pse = pse,size = size,time = time[1])
+  return(result)
+}
+```
+
+```{r echo=FALSE}
+set.seed(1821)
+load('BostonHousing1.Rdata')
+myData = Housing1
+n = nrow(myData)
+p = ncol(myData) - 1
+
+# some algorithms need the matrix/vector 
+# input (instead of a data frame)
+X = data.matrix(myData[,-1])  
+Y = myData[,1]  
+
+# all.test.id: ntestxT matrix, each column records 
+ntest = round(n * 0.25)  # test set size
+ntrain = n-ntest  # training set size
+N=50
+all.test.id = matrix(0, ntest, N)  # 
+for(t in 1:N){
+  all.test.id[, t] = sample(1:n, ntest)
+}
+save(all.test.id, file="alltestID.RData")
+
+test.id = all.test.id[,1] 
+
+full_result = full()
+AIC.F_result = AIC.F()
+AIC.B_result = AIC.B()
+BIC.F_result = BIC.F()
+BIC.B_result = BIC.B()
+R_min_result = R_min(-5,1)
+R_1se_result = R_1se(-5,1)
+L_min_result = L_min(-9,-3)
+L_1se_result = L_1se(-9,-3)
+L_Refit_result = L_Refit(-9,-3)
+```
+
+##Boston Housing 1
+```{r,echo=FALSE}
+MPSE = data.frame(AIC.B=AIC.B_result$pse,AIC.F = AIC.F_result$pse,
+                  BIC.B=BIC.B_result$pse,BIC.F=BIC.F_result$pse,
+                  full = full_result$pse,L_1se=L_1se_result$pse,
+                  L_min=L_min_result$pse,L_Refit=L_Refit_result$pse,
+                  R_1se=R_1se_result$pse,R_min=R_min_result$pse)
+
+M_size = data.frame(AIC.B=AIC.B_result$size,AIC.F = AIC.F_result$size,
+                    BIC.B=BIC.B_result$size,BIC.F=BIC.F_result$size,
+                    full = full_result$size,L_1se=L_1se_result$size,
+                    L_min=L_min_result$size,L_Refit=L_Refit_result$size,
+                    R_1se=R_1se_result$size,R_min=R_min_result$size)
+
+R_time = data.frame(full = full_result$time, AIC.F = AIC.F_result$time,
+                    AIC.B=AIC.B_result$time,BIC.F=BIC.F_result$time,
+                    BIC.B=BIC.B_result$time,R_min=R_min_result$time,
+                    R_1se=R_1se_result$time,L_min=L_min_result$time,
+                    L_1se=L_1se_result$time,L_Refit=L_Refit_result$time,row.names = "Rtime")
+
+g1 = ggplot(stack(MPSE), aes(x = ind, y = values, color = ind)) + geom_boxplot() +
+            theme(legend.position="none") + labs(x = 'Method', y = 'Prediction Error')
+
+g2 = ggplot(stack(M_size), aes(x = ind, y = values, color = ind)) + geom_boxplot() +
+            theme(legend.position="none") + labs(x = 'Method', y = 'Model Size')
+
+grid.arrange(g1, g2, nrow=2)
+R_time
+```
+
+
+```{r,echo=FALSE}
+set.seed(1821)
+load('BostonHousing2.Rdata')
+myData = Housing2
+n = nrow(myData)
+p = ncol(myData) - 1
+
+# some algorithms need the matrix/vector 
+# input (instead of a data frame)
+X = data.matrix(myData[,-1])  
+Y = myData[,1]  
+
+# all.test.id: ntestxT matrix, each column records 
+ntest = round(n * 0.25)  # test set size
+ntrain = n-ntest  # training set size
+N=50
+all.test.id = matrix(0, ntest, N)  # 
+for(t in 1:N){
+  all.test.id[, t] = sample(1:n, ntest)
+}
+save(all.test.id, file="alltestID.RData")
+
+test.id = all.test.id[,1] 
+
+R_min_result = R_min(-5,-1)
+R_1se_result = R_1se(-5,-1)
+L_min_result = L_min(-10,-5)
+L_1se_result = L_1se(-10,-5)
+L_Refit_result = L_Refit(-10,-5)
+```
+
+##Boston Housing 2
+```{r,echo=FALSE}
+MPSE = data.frame(L_1se=L_1se_result$pse,L_min=L_min_result$pse,L_Refit=L_Refit_result$pse,
+                  R_1se=R_1se_result$pse,R_min=R_min_result$pse)
+
+M_size = data.frame(L_1se=L_1se_result$size,L_min=L_min_result$size,L_Refit=L_Refit_result$size,
+                    R_1se=R_1se_result$size,R_min=R_min_result$size)
+
+R_time = data.frame(R_min=R_min_result$time,R_1se=R_1se_result$time,L_min=L_min_result$time,
+                    L_1se=L_1se_result$time,L_Refit=L_Refit_result$time,row.names = "Rtime")
+
+g1 = ggplot(stack(MPSE), aes(x = ind, y = values, color = ind)) + geom_boxplot() +
+            theme(legend.position="none") + labs(x = 'Method', y = 'Prediction Error')
+
+g2 = ggplot(stack(M_size), aes(x = ind, y = values, color = ind)) + geom_boxplot() +
+            theme(legend.position="none") + labs(x = 'Method', y = 'Model Size')
+
+grid.arrange(g1, g2, nrow=2)
+R_time
+
+```
+
+```{r,echo=FALSE}
+load('BostonHousing3.Rdata')
+myData = Housing3
+n = nrow(myData)
+p = ncol(myData) - 1
+
+# some algorithms need the matrix/vector 
+# input (instead of a data frame)
+X = data.matrix(myData[,-1])  
+Y = myData[,1]  
+
+# all.test.id: ntestxT matrix, each column records 
+ntest = round(n * 0.25)  # test set size
+ntrain = n-ntest  # training set size
+N=50
+all.test.id = matrix(0, ntest, N)  # 
+for(t in 1:N){
+  all.test.id[, t] = sample(1:n, ntest)
+}
+save(all.test.id, file="alltestID.RData")
+
+test.id = all.test.id[,1] 
+
+R_min_result = R_min(-2,2)
+R_1se_result = R_1se(-2,2)
+L_min_result = L_min(-6,-2)
+L_1se_result = L_1se(-6,-2)
+L_Refit_result = L_Refit(-6,-2)
+```
+
+##Boston Housing 3
+```{r,echo=FALSE}
+MPSE = data.frame(L_1se=L_1se_result$pse,L_min=L_min_result$pse,L_Refit=L_Refit_result$pse,
+                  R_1se=R_1se_result$pse,R_min=R_min_result$pse)
+
+M_size = data.frame(L_1se=L_1se_result$size,L_min=L_min_result$size,L_Refit=L_Refit_result$size,
+                    R_1se=R_1se_result$size,R_min=R_min_result$size)
+
+R_time = data.frame(R_min=R_min_result$time,R_1se=R_1se_result$time,L_min=L_min_result$time,
+                    L_1se=L_1se_result$time,L_Refit=L_Refit_result$time,row.names = "Rtime")
+
+g1 = ggplot(stack(MPSE), aes(x = ind, y = values, color = ind)) + geom_boxplot() +
+            theme(legend.position="none") + labs(x = 'Method', y = 'Prediction Error')
+
+g2 = ggplot(stack(M_size), aes(x = ind, y = values, color = ind)) + geom_boxplot() +
+            theme(legend.position="none") + labs(x = 'Method', y = 'Model Size')
+
+grid.arrange(g1, g2, nrow=2)
+R_time
+```

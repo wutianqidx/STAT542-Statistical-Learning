@@ -1,0 +1,37 @@
+---
+title: "Project 2 Report"
+author: "Tianqi Wu"
+date: "11/8/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+## Model
+
+__Naive__: I implemented a naive model for each store and department combination. In particular, missing values for the weekly sales were imputed with zeros, then the last value of the weekly sales during the train period was used to predict each new week in the testing period.
+
+__TSLM_SVD__: The second model computes a forecast using linear regression and seasonal dummy variables. Also, preprocess of SVD is used which replaces the training data with a rank-reduced approximation of itself. Missing values for the weekly sales were imputed with zeros. The number of components kept is 12. 
+
+__TSLM_STLF_SVD__: The third model combines STLF with the second model. It uses stlf() from the forcast package for the oberservations after 2012-02-28. This date is chosen since stlf needs two years of data in this case. Hence, tslm is first used to reach two years worth of data. Then, there is finally engough data to do stlf. The number of components kept is 12 and the model typed used is 'ets'.
+
+The fuctions are leverage from the sample code given by Josh and winner code[1] from Kaggle with modifications. For the hyperparameters, number of components(12,13,14,15) and model type('ets','arima') are tried. No holiday adjustment is performed. The best result chosen is indicated above.
+
+## Result
+
+From the table,TSLM with SVD achieves best result of WMAE(1614). The overall running time of whole script is around 10 minutes and the computer system is Macbook Pro 3.1GHz, 8GB memory.
+
+
+```{r, echo=F}
+result = data.frame(Fold = c(1:10, 'Average'), 
+           Naive = c(2079, 2589, 2254, 2823, 5156, 4218, 2270, 2144, 2221, 2372, 2813),
+           TSLM_SVD = c(1967, 1377, 1385, 1550, 2310, 1640, 1686, 1392, 1412, 1425, 1614),
+           TSLM_STLF_SVD = c(1967, 1377, 1385, 1550, 2310, 1640, 1778, 1535, 1381, 1344, 1627))
+knitr::kable(result, caption = 'Error of Models')
+```
+
+## Reference
+[1] https://github.com/davidthaler/Walmart_competition_code
+

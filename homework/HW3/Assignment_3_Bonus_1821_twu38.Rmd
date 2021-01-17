@@ -1,0 +1,82 @@
+---
+title: "AssignmentOutput_3_Bonus_1821_twu38"
+author: "Tianqi Wu"
+date: "11/15/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r cv}
+lo.lev <- function(x1, sp){
+  
+  ## YOUR CODE: compute the diagonal entries of the smoother
+  ##             matrix S, stored in vector "lev"
+  ## Tip: check how we compute the smoother matrix
+  ##      for smoothing spline models
+  
+  n = length(x1);
+  lev = matrix(0, n, n);
+  for(i in 1:n){
+  y1 = rep(0, n); y1[i]=1;
+  los_model = loess(y1 ~ x1, span = sp, 
+                    control = loess.control(surface = "direct"));
+  yi = predict(los_model, x1, se = TRUE)$fit;
+  lev[,i]= yi;
+  }
+  lev = (lev+t(lev))/2
+  return(diag(lev))
+}
+
+onestep_CV <- function(x1, y1, sp){
+  
+  ## YOUR CODE: 
+  ## 1) fit a loess model y1 ~ x1 with span = sp, and extract 
+  ##    the corresponding residual vector
+  ## 2) call lo.lev to obtain the diagonal entries of S
+  ## 3) compute LOO-CV and GCV using formula from lecture notes
+  ##    [lec_W5_NonlinearRegression.pdf] page 33. 
+  
+  los_model = loess(y1 ~ x1, span = sp, 
+                    control = loess.control(surface = "direct"));
+  residual = los_model$residuals
+  lev = lo.lev(x1, sp)
+  n = length(x1)
+  cv = 0
+  gcv = 0
+  for (i in 1:n){
+    cv =  cv + (residual[i]/(1-lev[i]))^2/n
+    gcv =  gcv+(residual[i]/(1-mean(lev)))^2/n
+  }
+  return(list(cv = cv, gcv = gcv))
+}
+
+myCV <- function(x1, y1, span){
+  ## x1, y1: two vectors
+  ## span: a sequence of values for "span"
+  
+  m = length(span)
+  cv = rep(0, m)
+  gcv = rep(0, m)
+  for(i in 1:m){
+    tmp = onestep_CV(x1, y1, span[i])
+    cv[i] = tmp$cv
+    gcv[i] = tmp$gcv
+  }
+  return(list(cv = cv, gcv = gcv))
+}
+
+```
+
+The CV and GCV are:
+```{r data}
+mydata = read.csv(file = "Coding3_Bonus_Data.csv")
+span1 = seq(from = 0.2, by = 0.05, length = 15 )
+cv.out = myCV(mydata$x, mydata$y, span1)
+cv = cv.out$cv
+gcv = cv.out$gcv
+cbind(cv, gcv)
+```
+

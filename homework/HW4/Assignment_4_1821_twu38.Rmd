@@ -1,0 +1,133 @@
+---
+title: "Assignment_4_1821_twu38"
+author: "Tianqi Wu"
+date: "12/6/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(recommenderlab)  
+library(reshape2) 
+set.seed(1821)
+```
+
+```{r}
+# ratings data
+# use colClasses = 'NULL' to skip columns
+ratings = read.csv('ratings.dat', sep = ':', 
+    colClasses = c('integer', 'NULL'), header = FALSE)
+colnames(ratings) = c('UserID', 'MovieID', 'Rating', 'Timestamp')
+#dim(ratings) # 1000209-by-4
+#ratings[1:4, ]
+
+# movies data
+# In movies.dat, some movie names contain single colon (:), so the above 
+# method does not work. 
+
+movies = readLines('movies.dat')
+movies = strsplit(movies, split = "::", fixed = TRUE, useBytes = TRUE)
+movies = matrix(unlist(movies), ncol = 3, byrow = TRUE)
+movies = data.frame(movies, stringsAsFactors = FALSE)
+colnames(movies) = c('MovieID', 'Title', 'Genres')
+movies$MovieID = as.integer(movies$MovieID)
+```
+
+```{r}
+ratings$Timestamp = NULL;
+colnames(ratings) = c('user', 'movie', 'rating')
+set.seed(1821)
+train.id = sample(nrow(ratings), floor(nrow(ratings)) * 0.6)
+train = ratings[train.id, ]
+#head(train)
+
+test = ratings[-train.id, ]
+test.id = sample(nrow(test), floor(nrow(test)) * 0.5)
+test = test[test.id, ]
+#head(test)
+
+label = test[c('user', 'rating')]
+test$rating = NULL
+#head(label)
+#head(test)
+```
+
+```{r}
+R = acast(train, user ~ movie)
+R = as(R, 'realRatingMatrix')
+R_m = normalize(R)
+head(getRatingMatrix(R_m))
+```
+
+```{r}
+# visualize
+#image(R, main = "Raw Ratings")
+#image(R_m, main = "Normalized Ratings")
+
+#recommenderRegistry$get_entries(dataType = "realRatingMatrix")
+rec = Recommender(R, method = 'UBCF',
+    parameter = list(normalize = 'Z-score', method = 'Cosine', nn = 5)
+    )
+
+#print(rec)
+#names(getModel(rec))
+
+recom = predict(rec, R, type = 'ratings')  # predict ratings. This may be slow.
+rec_list = as(recom, 'list')  # each element are ratings of that user
+```
+
+```{r}
+test$rating = NA
+
+# For all lines in test file, one by one
+for (u in 1:nrow(test)){
+
+    # Read userid and movieid from columns 2 and 3 of test data
+    userid = as.character(test$user[u])
+    movieid = as.character(test$movie[u])
+    
+    rating = rec_list[[userid]][movieid]
+    # 2.5 may be too arbitrary
+    test$rating[u] = ifelse(is.na(rating), 2.5, rating)
+}
+```
+
+```{r}
+rec2 = Recommender(R, method = 'IBCF')
+
+recom2 = predict(rec2, R, type = 'ratings')  # predict ratings. This may be slow.
+rec_list2 = as(recom2, 'list')  # each element are ratings of that user
+```
+
+```{r}
+test2 = test
+test2$rating = NA
+
+# For all lines in test file, one by one
+for (u in 1:nrow(test2)){
+
+    # Read userid and movieid from columns 2 and 3 of test data
+    userid = as.character(test2$user[u])
+    movieid = as.character(test2$movie[u])
+    
+    rating = rec_list2[[userid]][movieid]
+    # 2.5 may be too arbitrary
+    test2$rating[u] = ifelse(is.na(rating), 2.5, rating)
+}
+```
+
+Both models use the package recommenderlab from R to learn the recommender.The first model uses method 'UBCF'(User Based Collaborative Filtering) with parameters: normalize = 'Z-score', method = 'Cosine', nn = 5. The RMSE is:
+```{r,include=TRUE}
+RMSE(test$rating,ratings[-train.id,][test.id,]$rating)
+```
+
+The second model uses method 'IBCF'(Item Based Collaborative Filtering) with default parametes. The RMSE is:
+```{r,include=TRUE}
+RMSE(test2$rating,ratings[-train.id,][test.id,]$rating)
+```
+
+Overall, the script may take around half an hour to run. The computer system is Macbook Pro 3.1GHz, 8GB memory.
