@@ -1,0 +1,325 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"> 
+<title> Stat 542 Iowa Housing</title> 
+
+<style type="text/css"> 
+body {
+ margin-right: 50px;
+ margin-left: 50px;
+ margin-top: auto;
+ width: 680px;
+ font-size: 14px;
+ font-family: Verdana, Eyechart, Geneve, Arial, Helvetica, sans-serif;
+ color: black;
+ background-color: #FFFFDE;
+}
+
+h2 {
+/*font-family: Georgia, "MS Serif", "New York", serif; */
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-variant: small-caps;
+    color: #aa3300;
+}
+
+h4 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #003366;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #aa3300;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 18px;
+}
+big {
+ font-size: larger;
+}                                 
+
+small {
+ font-family: times;
+ font-size: 10pt;
+    }
+
+
+a:link {
+background: transparent;
+color : #ff6600;
+text-decoration : none;
+}
+a:visited {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+a:hover {
+background: transparent;
+color: #999999;
+text-decoration : underline;
+}
+
+a:active {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+pre {
+display: block; 
+   font-family: "courier new", courier, monospace;
+background-color: EBECE4;
+xwidth = 60%;
+}
+</style>
+
+
+</head>
+<body>
+
+<hr>
+
+<h4><span style="color: #aa3300;"> Project 1: Predict the Housing Prices in Ames (PART I) </span> </h4>
+
+You are asked to analyze the housing data collected on residential properties sold in Ames, Iowa between 2006 and 2010.  <br><br>
+
+Download the dataset, "Ames_data.csv", from the Resouces page. The dataset has 2930 rows (i.e., houses) and 83 columns. Column 1 is "PID", the Parcel identification number, the last column is the response variable, "Sale_Price", and the remaining 81 columns are explanatory variables describing (almost) every aspect of residential homes. <br><br>
+
+The goal is to predict the final price of a home with those explanatory variables.  
+
+
+<div>
+<dl><dt><b>Source</b><br><br></dt>
+<dd> 
+
+De Cock, D. (2011). "Ames, Iowa: Alternative to the Boston Housing Data as an End of Semester Regression Project," Journal of Statistics Education, Volume 19, Number 3. <br>
+<a href="http://ww2.amstat.org/publications/jse/v19n3/decock.pdf">http://ww2.amstat.org/publications/jse/v19n3/decock.pdf</a><br><br>
+
+Check variable description at<br> 
+<a href="https://ww2.amstat.org/publications/jse/v19n3/decock/DataDocumentation.txt">https://ww2.amstat.org/publications/jse/v19n3/decock/DataDocumentation.txt</a><br><br>
+
+
+This data set has been used in a Kaggle competition (<a href="https://www.kaggle.com/c/house-prices-advanced-regression-techniques">https://www.kaggle.com/c/house-prices-advanced-regression-techniques</a>). You can check how others analyze this data and try some sample code on Kaggle. Note that our data set has two more explanatory variables, "Longitude" and "Latitude", than the one on Kaggle.
+ 
+<br><br></dd>
+
+<dt><b> What you need to submit? </b><br><br></dt><dd>
+</dd><dd>  Before the deadline (<font color="blue">Thursday, Oct 18, 11:30pm, Pacific Time</font>) please submit the following two items to  the corresponding assignment box on Compass: 
+ <ul>
+   <li> <span style="text-decoration: underline;">R/Python code</span><br> (.R or .py or zip) that takes a training data and a test data as input and outputs three submission files (details are given below); <br><br>
+   </li><li> <span style="text-decoration: underline;">A report</span><br>
+   (3 pages maximum, pdf only) that provides the details of your code,
+   e.g., pre-processing, some technical details or implementation
+   details (if not trivial) of the models you use, etc. <br><br>
+
+   In addition, report  the accuracy (see evaluation metric given below), running time of your code and the computer system you use (e.g., Macbook Pro, 2.53 GHz, 4GB memory, or AWS t2.large). You <b>DO NOT</b> need to submit the part of the code related to the
+  evaluation you conduct. 
+   </li></ul>
+
+</dd><dt><b>How we evaluate your code? </b><br><br></dt>
+<dd> Name your main file as <b>mymain.R</b>. If you have multiple R files, upload the zip file. After unzipping your file, we will run the command "source(mymain.R)" in a directory, in which there are only two files: train.csv and test.csv.  
+  <ul>
+    <li><b>train.csv</b>: about 70% of the whole data "Ames_data.csv" with exactly the same 83 columns; </li>
+    <li> <b>test.csv</b>: the remaining 30% of the whole data without the last column "Sale_Price", i.e., it has 82 columns. </li>
+  </ul>
+
+Build <b>TWO</b> prediction models. Always include a tree-based ensemble model, e.g., randomForest, and/or boosting tree. <br><br>
+  
+After running your Rcode, we should see <b>TWO txt files</b> in the same directory named "mysubmission1.txt" and "mysubmission2.txt". Each submission file correspoonds to a prediction on the test data. 
+<ul>
+  <li> <b>Submission File Format.</b> The file should have the following format (do not forget the <b>comma</b> between PID and Sale_Price):
+    <pre>
+PID,  Sale_Price 
+528221060,  169000.7 
+535152150,  14523.6 
+533130020,  195608.2 
+
+</pre>
+  </li>
+  <li> <b>Evaluation Metric.</b> Submission are evaluated on Root-Mean-Squared-Error (RMSE) between the logarithm of the predicted price and the logarithm of the observed sales price.
+
+  Our evaluation R code looks like the following: 
+  <pre>
+# Assume the Y value for the test data is stored in a two-column 
+# data frame named "test.y":
+# col 1: PID
+# col 2: Sale_Price
+
+pred &lt;- read.csv("mysubmission1.txt")
+names(test.y)[2] &lt;- "True_Sale_Price"
+pred &lt;- merge(pred, test.y, by="PID")
+sqrt(mean((log(pred$Sale_Price) - log(pred$True_Sale_Price))^2))
+
+  </pre>
+  </li>
+
+
+The evaluation process for Python code is the same. <br><br>
+
+<li> <b>Performance Target.</b> Full credit for submissions with <b>one RMSE less than <font color="red"> 0.132</font></b>. Extra credit (2pt) for one accuracy less than <b>0.120</b>.
+  </ul>
+
+
+</dd>
+</dl>
+
+<dt><b>Frequently Asked Questions</b></dt><dt>
+</dt><dd>
+  <ul>
+    <li><i> <span style="text-decoration: underline;">Will you give us the training and test dataset?</span></i><br><br>
+
+      The training and test data used for our validation will not be given to students. As mentioned on the project page, you should test your code by conducting a self-evaluation, in which you randomly split the whole data into training and test sets (70% vs. 30%). <br><br>
+    </li>
+
+    <li> <i> <span style="text-decoration: underline;">Should we download the training/test datasets from Kaggle and upload our prediction on Kaggle for evaluation? </span></i><br><br>
+
+      No, you do not need to download any datasets from Kaggle. The whole data set "Ames_data.csv" is available on the Resources page; you form your own training and test sets by random splitting (70% vs. 30%). <br><br>
+      </li> 
+
+    <li> <i>  <span style="text-decoration: underline;">Should we include the split data part in the function we write? The variable we use in the function should be only training data or both training and testing data?</span></i><br><br>
+
+      No, you do not need to include the split data part in your code. Your code should start with loading the train.csv and test.csv. Build your models based on train.csv, and then output your predictions for houses in test.csv. Store your output in txt files following the Submission File Format described on the project page. 
+      <br><br>
+      </li>
+
+    <li>   <span style="text-decoration: underline;">Are the training and test data already in the Global Environment or we have to read them in?  </span><br><br>
+
+      You have to read them in. The starting point of your R script may look like this
+      <pre># read in data
+train &lt;- read.csv("train.csv", ...)
+test &lt;- read.csv("test.csv", ...)
+      </pre>
+
+
+    </li><li><i><span style="text-decoration: underline;">Do we need to do diagnostics? Is it important for this data set? If it is, should we delete the extreme values?</span></i><br><br>
+
+
+Diagnostics or any pre-processing for missing values and extreme values are done by you. If you find out that a pre-processing procedure plays an important role in prediction, you should include it in the code and also describe it in the report. <br><br>
+
+Please keep in mind that you are NOT asked to report detailed EDA (exploratory data analysis), but to build predictive models based on this data set. <br><br>
+</li>
+
+
+<li><i> <span style="text-decoration: underline;">The test data could have new levels that do not appear in the training data. This happens  frequently with categorical variables that have infrequent levels, when I randomly split the data into two parts. How to handle this situation? </span></i><br><br>
+
+Usually, there is no need to consider all levels of a categorical variable, especially the levels with small frequencies (i.e., rare levels). You can, for example, only code the top K most frequent levels, and merge all the remaining levels as "Other". Now any unseen levels in the test data are regarded as "Other." <br><br>
+
+"Condition_2" and "Utilities" tend to have just one level in the training data, since the other levels, except a dominate level, are rare. If a categorical variable has only one level in the training data, it's confounded with the intercept. Just ignore that variable when building your model. <br><br>
+
+  "Overall_Qual" is a ordered categorical variable randing from 1 to 10 based on the data description. Suppose level 7 is missing in the training data, then for a test house with level 7, you can form a prediction with level 6 and one with level 8, and then average them. Or you can merge some levels, say, &lt;=3 to be low, 4 to 7 to be med, and &gt;=8 to be high. <br><br>
+
+For "Year_Built", you can create some bins, such as "before 1950", "1951-1965", etc. How to choose the cut-off points? You can build a tree model with the original response variable, i.e., the housing price, as response, and one predictor "Year_Built". You can require the number of leaf nodes for that tree to be a relatively small number, say 12. Then, each leaf node corresponds to an interval/bin of Year_Built. (Ignore this suggestion if you don't know how to fit a tree model; you can use this approach for future projects.) <br><br>
+
+You can also view a new level as a missing data problem (now missing in the test not training), and then impute the missing value, e.g., 1) form a prediction with the missing replaced by the most frequent level, 2) form an averaged prediction with the missing replaced by several levels (top K most frequent levels or all levels if the number of levels is relatively small), or 3) replace the missing value by imputation. Some students recommend this R package "mice" for imputation. <br><br>
+
+</li>
+<li><i> <span style="text-decoration: underline;">Apply PCA?  This Kaggle post [<a href="https://www.kaggle.com/miguelangelnieto/house-prices-advanced-regression-techniques/pca-and-regression]" target="_blank">link</a>] used the first 36 PC's for regression. How to implement it in R? </span></i><br><br>
+
+Below we translate the Python code (on Kaggle) to R. Note that the code is based on the Ames data on Kaggle, which is just part of the Ames data (and may be of different format), so the the result from a PCA on our Ames data might be different.   
+
+<pre>
+train = read.csv('./input/train.csv')
+labels = train$SalePrice
+test = read.csv('./input/test.csv')
+data = rbind(train[, which(! colnames(train) %in% 'SalePrice')], test)
+ids = test$Id
+
+head(train)
+
+# Count the number of rows in train
+nrow(train)
+
+# Count the number of rows in total
+nrow(data)
+
+# Count the number of NaNs each column has.
+nans = colSums(is.na(data))
+nans[which(nans &gt; 0)]
+
+# Remove columns with more than a thousand missing values
+# Will remove the Id's after one-hot-encoding
+data = data[, which(! colnames(data) %in% c('Alley', 'Fence', 
+        'MiscFeature', 'PoolQC', 'FireplaceQu'))]
+
+# Count the column types
+table(sapply(data, class))
+
+
+all_columns = colnames(data)
+non_categorical = c("LotFrontage", "LotArea", "MasVnrArea", 
+                    "BsmtFinSF1", "BsmtFinSF2", "BsmtUnfSF",
+                    "TotalBsmtSF", "1stFlrSF", "2ndFlrSF", 
+                    "LowQualFinSF", "GrLivArea", "GarageArea", 
+                   "WoodDeckSF", "OpenPorchSF", "EnclosedPorch", 
+                   "3SsnPorch", "ScreenPorch","PoolArea", "MiscVal")
+categorical = setdiff(all_columns, non_categorical)
+
+# One Hot Encoding and nan transformation
+data = model.matrix(Id ~ . -1, model.frame(~ ., data = data, 
+              na.action = na.pass))  # Id removed from data
+
+getMode = function(x){
+    x.values = table(x)
+    as.numeric(names(x.values)[which.max(x.values)])
+}
+
+imp = function(x){
+    na.id = which(is.na(x))
+    if (length(na.id) &gt; 0){
+        x[na.id] = getMode(x)
+    }
+    x
+}
+
+data = apply(data, 2, imp)
+
+# Log transformation
+data = log(data)
+labels = log(labels)
+
+# Change -inf to 0 again
+data[which(data == -Inf, arr.ind = TRUE)] = 0
+
+# Apply PCA
+pca = prcomp(data)
+
+# variance explained by PC's
+cumsum(pca$sdev^2) / sum(pca$sdev^2)
+
+</pre>
+
+
+</li>
+    
+<li><i> <span style="text-decoration: underline;">The RMSE of the logarithm of price is infinity/nan for some observations. What should I do?</span></i><br><br>
+
+<p>
+Recall that <code>log(y)</code> is only defined for <code>y > 0</code>. If you train a model to predict <code>y</code> without any constraints it is possible that your model may predict a zero or negative value. These zero or negative predictions will cause infinities and nans to pop up in the metric calculations.
+</p>   
+    
+<p>
+Although not as prominent in the Ames dataset, this can commonly happen when you switch from optimizing for RMSE to MAE (Mean-Absolute-Error). In the case of zero-inflated regression the intercept only model will predict the median, which is often times zero.
+</p>
+    
+<p>
+To solve this issue it is good practice to predict <code>log(y)</code> or in this case <code>log(Sales_Price)</code> instead of the untransformed target. In other words, what matters in your modeling is <code>log(Sales_Price)</code>. You do not build a model to predict price and then plug a log of it into the evaluation metric. You build a model to predict the logarithm of the target and then use normal RMSE to evaluate the model's performance.
+</p>
+    
+<p>
+If you decide to predict <code>log(Sales_Price)</code>, then you will need to transform the target back using the exponential -- <code>exp(pred)</code> -- when submitting your results.
+</p>
+    
+    
+</li></ul>
+    
+</dd><dt>
+
+</dt></div>
+<hr>
+
+
+
+</body></html>

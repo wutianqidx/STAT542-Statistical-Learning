@@ -1,0 +1,304 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"> 
+<title> Stat 542 Walmart Sales</title> 
+
+<style type="text/css"> 
+body {
+ margin-right: 50px;
+ margin-left: 50px;
+ margin-top: auto;
+ width: 680px;
+ font-size: 14px;
+ font-family: Verdana, Eyechart, Geneve, Arial, Helvetica, sans-serif;
+ color: black;
+ background-color: #FFFFDE;
+}
+
+h2 {
+/*font-family: Georgia, "MS Serif", "New York", serif; */
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-variant: small-caps;
+    color: #aa3300;
+}
+
+h4 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #003366;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #aa3300;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 18px;
+}
+big {
+ font-size: larger;
+}                                 
+
+small {
+ font-family: times;
+ font-size: 10pt;
+    }
+
+
+a:link {
+background: transparent;
+color : #ff6600;
+text-decoration : none;
+}
+a:visited {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+a:hover {
+background: transparent;
+color: #999999;
+text-decoration : underline;
+}
+
+a:active {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+pre {
+display: block; 
+   font-family: "courier new", courier, monospace;
+background-color: EBECE4;
+xwidth = 60%;
+}
+</style>
+
+
+</head>
+<body>
+
+<hr>
+
+<h4><span style="color: #aa3300;"> Project 2: Walmart Stores Forcasting</span></h4>
+
+
+You are provided with historical sales data for 45 Walmart stores
+located in different regions. Each store contains many departments. The goal is to predict the future weekly
+sales for each department in each store based on the historical data.
+
+<div>
+<dl><dt><b>Source</b><br><br></dt>
+<dd> You can find the data (only train.csv), relevant information, and some sample code
+  on Kaggle (<a href="https://www.kaggle.com/c/walmart-recruiting-store-sales-forecasting" target="_blank">https://www.kaggle.com/c/walmart-recruiting-store-sales-forecasting</a>). Note that  <b>ONLY</b> the training data is used in this project and our evaluation procedure is <b>different</b> from the one on Kaggle. 
+
+<br><br></dd>
+
+<dt><b> What you need to submit? </b><br><br></dt><dd>
+</dd><dd>  Before the deadline (<font color="blue">Thursday, November 8, 11:30PM, Pacific Time </font>), please submit the following two items (one copy per team) to  the corresponding assignment box on Compass: 
+ <ul>
+   <li> <span style="text-decoration: underline;">R/Python
+   code</span><br> (.R or .py or zip; details are given below); <br><br>
+   </li><li> <span style="text-decoration: underline;">A report</span><br>
+   (3 pages maximum, pdf only) that provides the details of your code,
+   e.g., pre-processing, some technical details or implementation
+   details (if not trivial) of the models you use, etc.<br><br>
+   
+   In addition, In addition, report  the accuracy (see evaluation metric given below), running time of your code and the computer system you use (e.g., Macbook Pro, 2.53 GHz, 4GB memory, or AWS t2.large). You <b>DO NOT</b> need to submit the part of the code related to the evaluation you conduct.
+   </li></ul>
+
+</dd><dt><b>How we evaluate your code? </b><br><br></dt>
+<dd> The initial train.csv file you'll be provided has the weekly sales data
+  for all stores and departments from 2010-02 (February 2010) to 2011-02
+  (February 2011), which takes the same format as the
+  train.csv file on Kaggle (see the FAQ section).  <br><br>
+
+  Then you'll be asked to predict the weekly
+  sales for each department in each store for the next two month,
+  starting from 2011-03 to 2012-10 (20 months in total). <br><br>
+
+  For example, based on the
+  the data till 2011-02, you need to predict the weekly sales
+for 2011-03 and 2011-04, then you'll be provided with the weekly sales
+  data for 2011-03 and 2011-04, and next you need to predict the weekly sales
+for 2011-05 and 2011-06, and so on. <br><br>
+
+Our evaluation procedure is formulated like backtesting for stock trading systems: when predicting the sales of a month, you are only allowed to use all the information available till that month --- you cannot peek into the future. <br><br>
+
+ Name your main file as <b>mymain.R</b>. If you have multiple R files, upload the zip file. Our evaluation
+ code looks like the following:
+
+<pre>library(tidyverse)
+
+source("mymain.R")
+
+# read in train / test dataframes
+train <- readr::read_csv('train.csv')
+test <- readr::read_csv('test.csv', col_types = list(
+    Weekly_Pred1 = col_double(),
+    Weekly_Pred2 = col_double(),
+    Weekly_Pred3 = col_double()
+))
+
+# save weighted mean absolute error WMAE
+num_folds <- 10
+wae <- tibble(
+    model_one = rep(0, num_folds), 
+    model_two = rep(0, num_folds), 
+    model_three = rep(0, num_folds)
+)
+
+# time-series CV
+for (t in 1:num_folds) {
+  # *** THIS IS YOUR PREDICTION FUNCTION ***
+  mypredict()
+  
+  # Load fold file 
+  # You should add this to your training data in the next call 
+  # to mypredict()
+  fold_file <- paste0('fold_', t, '.csv')
+  new_test <- readr::read_csv(fold_file)
+
+  # extract predictions matching up to the current fold
+  scoring_tbl <- new_test %>% 
+      left_join(test, by = c('Date', 'Store', 'Dept'))
+  
+  # compute WMAE
+  actuals <- scoring_tbl$Weekly_Sales
+  preds <- select(scoring_tbl, contains('Weekly_Pred'))
+  weights <- if_else(scoring_tbl$IsHoliday.x, 5, 1)
+  wae[t, ] <- colSums(weights * abs(actuals - preds)) / sum(weights)
+}
+
+# save results to a file for grading
+readr::write_csv(wae, 'Error.csv')
+</pre>
+
+  <ul>
+  <li> <b>train.csv</b>: 5 columns ("Store", "Dept", "Date",
+  "Weekly_Sales", "IsHoliday"), same as the train.csv file on Kaggle
+  but ranging from 2010-02 to 2011-02.<br><br>
+  </li><li> <b>test.csv</b>: 7 columns ("Store", "Dept", "Date",
+  "IsHoliday", "Weekly_Pred1", "Weekly_Pred2", "Weekly_Pred3"), in
+  the same format as the train.csv file on Kaggle ranging from 2011-03 to 2012-10 with 
+  the last three columns being zero. <br><br>
+  </li><li> <b>fold_1.csv</b>, ..., <b>fold_10.csv</b>: 5 columns ("Store", "Dept", "Date",
+  "Weekly_Sales", "IsHoliday"), same as the train.csv file on Kaggle,
+  and one for every two months starting from 2011-03 to 2012-10. 
+  <br><br>
+  </li><li> In your "mypredict" function, save the result from your three prediction models 
+  in the corresponding rows in the data set "test". <br><br>
+    </li><li> The evaluation metric is the same as <a href="https://www.kaggle.com/c/walmart-recruiting-store-sales-forecasting#evaluation" target="_blank">the one described on
+  Kaggle</a>. 
+
+</li></ul>
+The evaluation process for Python code is similar. <br><br>
+
+You are required to build <b>three</b> prediction models. Always include a
+simple model, a model that doesn't require much training. For example,
+predict sales for the next month by some average based on the previous
+month or months.
+
+</dd>
+</dl>
+
+<dt><b>Frequently Asked Questions</b></dt><dt>
+</dt><dd>
+  <ul>
+    <li><i> <span style="text-decoration: underline;">Will you give us the training and test dataset?</span></i><br><br>
+
+        The train.csv and test.csv for our evaluation are generated from the training data on Kaggle using the following code.  (You can download "train.csv.zip" from Kaggle or from the Resources page.)
+
+<pre>library(lubridate)
+library(tidyverse)
+
+# read raw data and extract date column
+train_raw <- readr::read_csv(unz('train.csv.zip', 'train.csv'))
+train_dates <- train_raw$Date
+
+# training data from 2010-02 to 2011-02, i.e. one year
+start_date <- ymd("2010-02-01")
+end_date <- start_date %m+% months(13)
+
+# split dataset into training / testing
+train_ids <- which(train_dates >= start_date & train_dates < end_date)
+train = train_raw[train_ids, ]
+test = train_raw[-train_ids, ]
+
+# write the training results to a file
+readr::write_csv(train, 'train.csv')
+
+# Create the test.csv 
+# Removes weekly sales and adds model pred columns.
+test %>% 
+    select(-Weekly_Sales) %>% 
+    mutate(Weekly_Pred1 = 0, Weekly_Pred2 = 0, Weekly_Pred3 = 0) %>% 
+    readr::write_csv('test.csv')
+
+# create 10-fold time-series CV
+num_folds <- 10
+test_dates <- train_dates[-train_ids]
+
+# month 1 --> 2011-03, and month 20 --> 2012-10.
+# Fold 1 : month 1 & month 2, Fold 2 : month 3 & month 4 ...
+for (i in 1:num_folds) {
+    # filter fold for dates
+    start_date <- ymd("2011-03-01") %m+% months(2 * (i - 1))
+    end_date <- ymd("2011-05-01") %m+% months(2 * (i - 1))
+    test_fold <- test %>%
+        filter(Date >= start_date & Date < end_date)
+    
+    # write fold to a file
+    readr::write_csv(test_fold, paste0('fold_', i, '.csv'))
+}
+
+</pre>
+</li>
+<li><i> <span style="text-decoration: underline;">What do we need to do in "mypredict()", a function that takes no input and produces no output either? </span></i><br><br>
+
+In R, variables like train, test, and t are global parameters for "mypredict", so your predict function can access them, and even change their values using "&lt;&lt;-" for assigning values. 
+
+<pre>test=function(){
+  print(x^2)
+  x &lt;&lt;- 2*x
+}
+
+x=3
+test()
+x
+
+</pre>
+
+Sourcing mymain.R basically loads in the function "mypredict". When running mypredict() for each t, you need to
+do the following: 
+<ul>
+<li> If t &gt; 1, append new_test to training data;  </li>
+<li> Update your model with the new training data, or only update your model periodically with enough new training data (up to you);</li>
+<li> apply your current model to fill in the last three columns of "test" for the t-th two month period. <br><br></li>
+</ul>
+
+
+
+</li>
+
+<li><i> <span style="text-decoration: underline;">Will you give us some materials of dealing with time series data sets?</span></i><br><br>
+
+Check Walmart_Sample_Code.html on the Resouces page. <br><br>
+
+R package [<a href="https://github.com/robjhyndman/forecast" target="_blank">forecast</a>] is designed for time series data. It's related to the stl package  used in Walmart_Sample_Code.html. <br><br>
+
+On the other hand, if we create some features to describe the history at time t, e.g., x_t is a two-dimensional feature vector denoting the sales from the previous two weeks, then we can use linear regression models. <br><br>
+
+</li><li><i> <span style="text-decoration: underline;">Some depts, like dept 99 of some stores, doesn't have any value in the first year. How should we predict without data, and how will you evaluate our prediction on missing values within the original training data?  
+</span></i><br><br>
+
+You can go through the discussion forum on Kaggle to check how others handle the problem of prediction with missing history.  The simplest solution is to predict it to be zero, or some kind of average (e.g., store average). Check Walmart_Sample_Code.html. <br><br>
+
+Evaluation with missing data: if an observation is missing in 2010-03, we will skip that observation in the evaluation.
+
+</li></ul></dd></div>
+<hr>
+
+</body></html>

@@ -1,0 +1,149 @@
+<html> 
+<head> 
+<title> Coding Assignment 4: Stat542 (F18) Recommender System</title> 
+
+<style type="text/css"> 
+body {
+ margin-right: 50px;
+ margin-left: 50px;
+ margin-top: auto;
+ width: 680px;
+ font-size: 14px;
+ font-family: Verdana, Eyechart, Geneve, Arial, Helvetica, sans-serif;
+ color: black;
+ background-color: #FFFFDE;
+}
+
+h2 {
+/*font-family: Georgia, "MS Serif", "New York", serif; */
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-variant: small-caps;
+    color: #aa3300;
+}
+
+h4 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #003366;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #aa3300;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 18px;
+}
+big {
+ font-size: larger;
+}                                 
+
+small {
+ font-family: times;
+ font-size: 10pt;
+    }
+
+
+a:link {
+background: transparent;
+color : #ff6600;
+text-decoration : none;
+}
+a:visited {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+a:hover {
+background: transparent;
+color: #999999;
+text-decoration : underline;
+}
+
+a:active {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+pre {
+display: block; 
+   font-family: "courier new", courier, monospace;
+background-color: EBECE4;
+xwidth = 60%;
+}
+</style>
+
+
+</head>
+<body>
+
+
+
+<h2><span style="color: #aa3300;"> Coding Assignment 4: Recommender System</span></h2>
+
+
+Build a movie recommender system based on the MovieLens 1M Dataset. 
+
+<div>
+<dl><dt><b>Source</b><br /><br /></dt>
+<dd> Download the 
+<a href="https://grouplens.org/datasets/movielens/1m/" target="_blank">MovieLens 1M Dataset</a>. You'll find four files:
+  README, movies.dat, ratings.dat, and users.dat. Check the readme
+  file to understand the format of the other three files. 
+<br /><br /></dd>
+
+
+<dt><b>What you need to do? </b><br /><br /></dt>
+
+<dd> Assume your working directory contains the following files: <b>movies.dat</b> and <b>ratings.dat</b> that are exactly
+    the same as the ones
+    from the MovieLens 1M dataset; <br><br>
+
+<b>Step 1:</b> Set the seed at the beginning of your code to be the last 4-dig of your University ID.<br><br>
+
+<b>Step 2:</b> Create 
+<ul>
+    <li> <b>train data</b> that contains about 60% rows of the ratings.dat
+    from the MovieLens 1M dataset (of the same format);<br><br>
+    <li> <b>test data </b> that contains about 20% of the user-movie
+    pairs from the ratings.dat from the MovieLens 1M dataset. <br><br>
+    </ul>
+    
+Note that the  train data contains just 60% of the original
+    ratings, so it is possible some movies in movies.dat or
+    users in users.dat do not appear in the training, but
+    in test. <br><br>
+
+
+<b>Step 3:</b> Build <b>two</b> models to predict the movie rating for each
+  user-movie pair in the test data. 
+<br><br>
+
+<b>Step 4:</b> Report the <a href="https://en.wikipedia.org/wiki/Root-mean-square_deviations"
+  target="_blank">RMSE</a> (Root-mean-square error) of your two models on the test data. </dd>
+<br><br>
+
+
+<dt><b> What you need to submit? </b><br /><br /></dt><dd>
+<dd>  Before the deadline, <font color="blue">Thursday, December 13, 11:30PM (PT)
+  </font>, please submit the following items to the corresponding assignment box on Coursera/Compss: 
+ <ul>
+   <li> <span style="text-decoration: underline;">Rmd for R or Jupyter notebook for Python</span>; <br><br>
+    <li>  <span style="text-decoration: underline;">a PDF file</span> (Save the output from your Rmd or Jupyter notebook as a PDF file). 
+      <br><br>
+   <li> Include a brief introduction of the two models you use.<br><br>
+
+   <li> Name your files starting with <b>Assignment_1_xxxx_netID</b>
+where "xxxx" is the last 4-dig of your University ID.
+   <br><br>
+   </ul>
+
+
+</dl>
+</div>
+<hr />
+

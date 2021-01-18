@@ -1,0 +1,150 @@
+<html> 
+<head> 
+<title> Stat542 Movie Sentiment Analysis</title> 
+
+<style type="text/css"> 
+body {
+ margin-right: 50px;
+ margin-left: 50px;
+ margin-top: auto;
+ width: 680px;
+ font-size: 14px;
+ font-family: Verdana, Eyechart, Geneve, Arial, Helvetica, sans-serif;
+ color: black;
+ background-color: #FFFFDE;
+}
+
+h2 {
+/*font-family: Georgia, "MS Serif", "New York", serif; */
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-variant: small-caps;
+    color: #aa3300;
+}
+
+h4 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #003366;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #aa3300;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 18px;
+}
+big {
+ font-size: larger;
+}                                 
+
+small {
+ font-family: times;
+ font-size: 10pt;
+    }
+
+
+a:link {
+background: transparent;
+color : #ff6600;
+text-decoration : none;
+}
+a:visited {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+a:hover {
+background: transparent;
+color: #999999;
+text-decoration : underline;
+}
+
+a:active {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+pre {
+display: block; 
+   font-family: "courier new", courier, monospace;
+background-color: EBECE4;
+xwidth = 60%;
+}
+</style>
+
+
+</head>
+<body>
+
+<hr />
+
+<h4><span style="color: #aa3300;"> Project 4: Movie Review Sentiment Analysis</span></h4>
+
+You are provided with a dataset consists of IMDB movie reviews, where each review is labelled as positive or negative. The goal is to build a binary classification model to predict the sentiment of a movie review.
+
+<div>
+<dl><dt><b>Source</b><br /><br /></dt>
+<dd> Download the dataset, "Project4_data.tsv", from the Resouces page. The dataset has 50,000 rows (i.e., reviews) and 3 columns. Column 1 "new_id" is the ID for each review (same as the row number), Column 2 "sentiment" is the binary response, and Column 3 is the review.  <br><br>
+
+Download "Project4_splits.csv" from the Resouces page. The dataset has 3 columns, and each column consists of the "new_id" (or equivalently the row ID) of 25,000 test samples. That is, using "Project4_splits.csv", we can split the  50,000 reviews into <b>Three</b> sets of training and test data. <br><br>
+
+
+ <b>Performance Target.</b> Evaluation metric is AUC on the test data. 
+   Full credit for submissions with minimum AUC over three test data <strong>equal to or bigger than 0.96</strong>. <br><br>
+
+  
+A subset of this data set was used in a Kaggle competition: <a
+  href="https://www.kaggle.com/c/word2vec-nlp-tutorial"
+  target="_blank">Bag of Words Meets Bags of Popcorn</a>. You can check how others analyze such data and try some sample code on Kaggle. 
+
+<br><br></dd>
+
+<dt><b> What you need to submit? </b><br><br></dt><dd>
+</dd><dd>  Before the deadline (<font color="blue">Sunday, December 16, 11:30PM, Pacific Time </font>), please submit the following items: 
+ <ul>
+   <li> <span style="text-decoration: underline;">R/Python
+   code</span><br> (.R or .py or zip). Name your main file as <b>mymain.R</b>. We will evaluate your code in a directory that has "data.tsv" and "splits.csv". <br><br>
+
+   The beginning of your code should look like the following: 
+   <pre>
+  all = read.table("data.tsv",stringsAsFactors = F,header = T)
+  splits = read.table("splits.csv", header = T)
+  s = 3
+
+  # YOUR CODE
+  # For example, start loading required libraries
+  .... 
+   </pre>
+In the code above, we are checking your code on the 3rd training/test split. If we want to check your code on the 2nd  training/test split, we will change the value of s to be 2. <br><br>
+
+   Save the output of your prediction on the test data in a txt file, named <b>"mysubmission.txt", with two columns (separated by comma)</b>: col 1, "new_id" as the one from data.tsv, and col 2, "prob", the estimated probability of having sentiment = 1. <br><br>
+
+The requirement for python is the same: load "data.tsv" and "split.csv" and assign "value s" at the beginning of your code, and save the output on the s-th training/test split to a comma separated two-column txt file. 
+    <br><br>
+
+<li> <span style="text-decoration: underline;">Results on the Three Test Datasets.</span><br><br>
+  Submit your prediction results on the three test datasets through three txt files: "Result_1.txt", "Result_2.txt", and "Result_3.txt". Each file has two columns (separated by comma): col 1, "new_id" as the one from data.tsv, and col 2, "prob", the estimated probability of having sentiment = 1. <br><br>
+
+ Here is the connection between your code and the three txt files: if we run your code with "s = 1", then we will obtain a file named "mysubmission.txt", which should be the same as the file "Result_1.txt". Similarly if we run your code with "s = 2", then the resulting "mysubmission.txt" should be the same as the file "Result_2.txt" you submitted. 
+  <br><br>
+
+
+   </li><li> <span style="text-decoration: underline;">A report</span><br>
+   (pdf only, <strong>5</strong> pages maximum) that provides the details of your model and your implementation. In addition, provide a performance summary table for the three test datasets. 
+ <br><br>
+
+</li><li> Relevant files for <span style="text-decoration: underline;">Visualization</span><br>
+  that can help to reveal the essence of your sentiment prediction model for bonus credit. <br><br>
+
+   </li></ul>
+   <br><br>
+
+</dl>
+</div>
+<hr />
+

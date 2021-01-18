@@ -1,0 +1,209 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"> 
+<title> Stat 542 Iowa Housing</title> 
+
+<style type="text/css"> 
+body {
+ margin-right: 50px;
+ margin-left: 50px;
+ margin-top: auto;
+ width: 680px;
+ font-size: 14px;
+ font-family: Verdana, Eyechart, Geneve, Arial, Helvetica, sans-serif;
+ color: black;
+ background-color: #FFFFDE;
+}
+
+h2 {
+/*font-family: Georgia, "MS Serif", "New York", serif; */
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-variant: small-caps;
+    color: #aa3300;
+}
+
+h4 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #003366;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #aa3300;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 18px;
+}
+big {
+ font-size: larger;
+}                                 
+
+small {
+ font-family: times;
+ font-size: 10pt;
+    }
+
+
+a:link {
+background: transparent;
+color : #ff6600;
+text-decoration : none;
+}
+a:visited {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+a:hover {
+background: transparent;
+color: #999999;
+text-decoration : underline;
+}
+
+a:active {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+pre {
+display: block; 
+   font-family: "courier new", courier, monospace;
+background-color: EBECE4;
+xwidth = 60%;
+}
+</style>
+
+
+</head>
+<body>
+
+<hr>
+
+<h4><span style="color: #aa3300;"> Project 1: Predict the Housing Prices in Ames (PART II) </span> </h4>
+
+You are asked to implement Lasso using Coordinate Descent on the Ames housing data. <br><br>
+
+Download the dataset, "Ames_data.csv", from the Resouces page. The dataset has 2930 rows (i.e., houses) and 83 columns. Column 1 is "PID", the Parcel identification number, the last column is the response variable, "Sale_Price", and the remaining 81 columns are explanatory variables describing (almost) every aspect of residential homes. <br><br>
+
+The goal is to predict the final price of a home in Log scale. 
+
+
+<div>
+<dl><dt><b>Coordinate Descent for Lasso</b><br><br></dt>
+<dd> 
+  <ul>
+    <li> First write your own function or use the following function to solve the one-step Lasso for beta_j, see page 37 of [lec_W3_VariableSelection.pdf]. 
+
+<pre>
+
+one_step_lasso = function(r, x, lam){
+  xx = sum(x^2)
+  xr = sum(r*x)
+  b = (abs(xr) -lam/2)/xx
+  b = sign(xr)*ifelse(b>0, b, 0)
+  return(b)
+}
+
+</pre>
+
+<li> Then write a function to implement CD for n.iter steps. 
+
+<pre>
+
+mylasso = function(X, y, lam, n.iter = 50, standardize  = TRUE)
+{
+  # X: n-by-p design matrix without the intercept
+  # y: n-by-1 response vector
+  # lam: lambda value
+  # n.iter: number of iterations
+  # standardize: if True, center and scale X and y. 
+
+  
+
+  # YOUR CODE
+  # If standardize  = TRUE, center and scale X and Y
+               record the corresponding means and sd
+
+  
+  # Initial values for residual and coefficient vector b
+  b = rep(0, p)
+  r = y
+  
+  for(step in 1:n.iter){
+    for(j in 1:p){
+      
+      # YOUR CODE 
+
+      # 1) Update the residual vector  
+      # r <-- r + X[, j] * b[j]
+      # r on the left: residual in blue on p37 of [lec_W3_VariableSelection.pdf]
+      # r on the right: current residual
+
+      # 2) Apply one_step_lasso to update beta_j
+      # b[j] = one_step_lasso(r, X[, j], lam)
+
+      # 3) Update the current residual vector
+      # r <-- r - X[, j] * b[j]
+    }
+  }
+
+  # YOUR CODE: scale back b and add intercept b0
+  # For b0, check p13 of [lec_W3_VariableSelection.pdf]. 
+  return(c(b0, b))
+}
+
+</pre>
+
+<b>Note</b>: in the script above, we run a fixed number of steps. n.iter = 50 is just for illustration. You may need to set a bigger number. You can change it to a "while" loop to stop when some covergence criterion is satisified. <br><br>
+
+
+<li> In practice, you need to add another loop outside to compute the Lasso solution for a range of lambda values. <br><br>
+
+How to pick the lambda sequence? First think about how to find the largest lambda value (denoted by lambda_0), i.e., when lambda is bigger than lambda_0, all
+ coefficients are zero, and once lambda is smaller than lambda_0, one variable will enter the model. Then, set a sequence of lambda from lambda_0 to a small number times lambda_0, equally spaced in log-scale. <br><br>
+
+  In "mylasso" function above, the initial value of beta is always set to be all zero. You can try to use the fitted beta from a larger lambda value as the initial value for the next (smaller) lambda. <br><br>
+
+  <b>For this assignment, students are allowed to "cheat": you can use "glmnet" to figure out a proper range of lambda values, try them, and then fix a particular lambda value in your submission.</b><br><br>
+
+<li> Split the data into training and test with the test.id generated as follows. Fit your Lasso algorithm on the training data and pick the best lambda value by minimizing the RMSE of the logarithm of Sale_Price on the test data.
+
+  <pre>
+  
+test.id = seq(1, 2930, by=3)
+ </pre>
+
+<li> You can choose to apply your Lasso algorithm only on a subset of features. For example, we removed the following variables when trying our algorithm: Street, Utilities, Land_Slope, Condition_2, Roof_Matl, Heating, Pool_QC, Misc_Feature, Low_Qual_Fin_SF, Three_season_porch, Pool_Area, Misc_Val, Longitude and Latitude. 
+
+</ul>
+
+<br><br></dd>
+
+<dt><b> What you need to submit? </b><br><br></dt><dd>
+</dd><dd>  Before the deadline (<font color="blue">Thursday, Oct 18, 11:30pm, Pacific Time</font>) please submit your <span style="text-decoration: underline;">R/Python code</span><br> (.R or .py or zip).  <br><br>
+
+</dd><dt><b>How we evaluate your code? </b><br><br></dt>
+<dd> Name your main file as <b>mymain_Lasso.R</b>. If you have multiple R files, upload the zip file. 
+After unzipping your file, we will run the command "source(mymain_Lasso.R)" in a directory, in which there are only two files: train.csv and test.csv, where training and test are split using test.id described above. 
+  <ul>
+    <li><b>train.csv</b>: subset the whole data "Ames_data.csv" with exactly the same 83 columns; </li>
+    <li> <b>test.csv</b>: subset of whole data without the last column "Sale_Price", i.e., it has 82 columns. </li>
+  </ul>
+
+After running your Rcode, we should see <b>ONE txt files</b> in the same directory named "mysubmission3.txt".  <b>Submission File Format</b> and <b>Evaluation Procedure</b> are the same as Part I. <br><br>
+
+
+<b>Your RMSE should be below <font color="red">0.125</font></b>. <br><br>
+
+
+The evaluation process for Python code is the same. <br><br>
+
+</dt></div>
+<hr>
+
+
+
+</body></html>

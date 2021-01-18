@@ -1,0 +1,254 @@
+<html> 
+<head> 
+<title> Stat 542 Lending Club</title> 
+
+<style type="text/css"> 
+body {
+ margin-right: 50px;
+ margin-left: 50px;
+ margin-top: auto;
+ width: 680px;
+ font-size: 14px;
+ font-family: Verdana, Eyechart, Geneve, Arial, Helvetica, sans-serif;
+ color: black;
+ background-color: #FFFFDE;
+}
+
+h2 {
+/*font-family: Georgia, "MS Serif", "New York", serif; */
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-variant: small-caps;
+    color: #aa3300;
+}
+
+h4 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #003366;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: #aa3300;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 18px;
+}
+big {
+ font-size: larger;
+}                                 
+
+small {
+ font-family: times;
+ font-size: 10pt;
+    }
+
+
+a:link {
+background: transparent;
+color : #ff6600;
+text-decoration : none;
+}
+a:visited {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+a:hover {
+background: transparent;
+color: #999999;
+text-decoration : underline;
+}
+
+a:active {
+background: transparent;
+color: #ff6600;
+text-decoration : underline;
+}
+
+pre {
+display: block; 
+   font-family: "courier new", courier, monospace;
+background-color: EBECE4;
+xwidth = 60%;
+}
+</style>
+
+
+</head>
+<body>
+
+<hr />
+
+<h4><span style="color: #aa3300;"> Project 3: Lending Club Loan Status</span></h4>
+
+
+You are provided with historical loan data issued by Lending
+Club. The goal is to build a model to predict the chance of default for a loan. 
+
+<div>
+<dl><dt><b>Source</b><br /><br /></dt>
+<dd> There are two sets of lending club data on Kaggle
+  <ul>
+    <li> <a href="https://www.kaggle.com/wendykan/lending-club-loan-data" target="_blank">https://www.kaggle.com/wendykan/lending-club-loan-data</a>: data 2007-15. 
+    </li>
+      <li> <a href="https://www.kaggle.com/wordsforthewise/lending-club" target="_blank">
+      https://www.kaggle.com/wordsforthewise/lending-club</a>: all data till 2018Q2. 
+    </li>
+  </ul>
+  We will use data from the 2nd site: accepted_2007_to_2018Q2.csv. <br><br>
+
+  The dataset has over 100 features, but some of them have too many NA values, and some are not suposed to be available at the beginning of the loan. For example, it is not meaningful to predict the status of a loan if we knew the date/amount of the last payment of that loan. So we focus on the following features (5 features in each row and 30 features in total including the response 'loan_status')
+
+<pre>'addr_state', 'annual_inc', 'application_type', 'dti', 'earliest_cr_line', 
+  'emp_length', 'emp_title', 'fico_range_high', 'fico_range_low', 'grade', 
+  'home_ownership', 'initial_list_status', 'installment', 'int_rate', 'id',
+  'loan_amnt', 'loan_status', 'mort_acc', 'open_acc', 'pub_rec', 
+  'pub_rec_bankruptcies', 'purpose', 'revol_bal', 'revol_util', 'sub_grade',
+  'term', 'title', 'total_acc', 'verification_status', 'zip_code'
+</pre>
+
+
+  Students <b>do not need to download data from Kaggle</b>. A copy of cleaned data (with 30 features) is available on Piazza: <b>loan_stat542.csv</b> <br><br>
+
+
+[<a href="https://help.lendingclub.com/hc/en-us/articles/215488038-What-do-the-different-Note-statuses-mean-" target="_blank">What do the different Note statuses mean?</a>] After a loan is issued by lendclub, the loan becomes "Current". 
+<ul>
+<li> The ideal scenario: lending club keeps receiving the monthly installment payment from the borrower, and eventually the loan is paid off and the loan status becomes "Fully Paid."
+  <li> Signs of trouble: loan is past due with 15 days (In Grace Period), late for 15-30 days, or late for 31-120 days. 
+ <li> Once a loan is past due for more than 120 days, its status will be "Default" or "Charged-off". Lending Club explains the difference between these two [<a href="https://help.lendingclub.com/hc/en-us/articles/216127747" target="_blank">Here</a>]. For this project, we will treat them the same. 
+ </ul>
+
+ We focus on closed loans, i.e., loan status being one of the
+  following:
+  <ul>
+    <li> Class 1 (bad loans): 'Default' or 'Charged Off'; 
+    <li> Class 0 (good loans): 'Fully Paid'. 
+    </ul>
+
+
+</dd>
+
+<dt><b> What you need to submit? </b><br /><br /></dt><dd>
+<dd>  Before the deadline (<font color="blue">Thursday, November 29, 11:30PM, Pacific Time</font>), please submit the following two items to the corresponding assignment box on Compass/Coursera: 
+ <ul>
+   <li> <span style="text-decoration: underline;">R/Python
+   code</span><br> (.R or .py or zip) that takes a training data and a
+   test data as input and outputs <b>up to three</b> submission files
+  in the format described below named as "mysubmission1.txt", "mysubmission2.txt", and "mysubmission3.txt". You could output just one or two files if you only use one or two prediction models. <br><br>
+
+   <li> <span style="text-decoration: underline;">A report</span><br>
+   (3 pages maximum, pdf only) that provides the details of your code,
+   e.g., pre-processing, some technical details or implementation
+   details (if not trivial) of the models you use, etc. <br><br>
+
+   Report accuracy (see evaluation metric given below), running time of your code and the computer system you use (e.g., Macbook Pro, 2.53 GHz, 4GB memory, or AWS t2.large). 
+   </ul>
+
+<dt><b>How we evaluate your code? </b><br /><br /></dt>
+<dd> Name your main file as <b>mymain.R</b>. If you have multiple R files, upload the zip file. After
+  unzipping your file, we will run the command "source(mymain.R)" in a
+  directory, in which there are two csv files:
+  <ul>
+    <li> train.csv,
+    <li> test.csv.
+    </ul>
+  The two csv files are in the same format as <b>loan_stat542.csv</b> on Piazza, except that the column of
+  "loan_status" is missing in test.csv. <br><br>
+
+  We construct the training and test data based on <b>Project3_test_id.csv</b> on Piazza.  <br><br>
+
+Build <b>up to three</b> prediction models. Record the prediction from
+  a model in a txt file, which should contain a header and have
+  the following format:
+  <pre>
+
+id, prob
+1077501, 0.73
+1077430, 0.02
+etc.
+
+</pre>
+  where "id" is the same as the "id" column from test.csv, and "prob"
+  contains the default probability returned from your model for that
+  loan. 
+  <br><br>
+  
+After running your code, we should see <b>up to three files</b> in
+  the same directory named "mysubmission1.txt", "mysubmission2.txt",
+  and "mysubmission3.txt". Each submission file correspoonds to a
+  prediction on the test data. Then we'll evaluate the prediction
+  accuracy using <a href="https://www.kaggle.com/wiki/LogarithmicLoss"
+  target="_blank">Log-loss</a>. <br><br>
+
+Our evaluation code looks like the following:
+
+<pre>
+
+#########################################################################
+# log-loss function
+logLoss = function(y, p){
+    if (length(p) != length(y)){
+        stop('Lengths of prediction and labels do not match.')
+    }
+    
+    if (any(p < 0)){
+        stop('Negative probability provided.')
+    }
+    
+    p = pmax(pmin(p, 1 - 10^(-15)), 10^(-15))
+    mean(ifelse(y == 1, -log(p), -log(1 - p)))
+}
+
+#########################################################################
+# Test code begins
+start.time = Sys.time()
+source('mymain.R')
+end.time = Sys.time()
+run.time = as.numeric(difftime(end.time, start.time, units = 'min'))
+
+# submission files
+allFiles = list.files()
+subFiles = grep('mysubmission', allFiles, value = TRUE, 
+                ignore.case = TRUE)
+
+# calculate the test error on the test set
+test = read.csv('test.csv')
+
+label = read.csv('label.csv', sep = ',')
+err = rep(NA, length(subFiles))
+for (met in 1:length(subFiles)){
+
+    prediction = read.csv(subFiles[met], sep = ',')
+    yp = merge(prediction, label, by = 'id', all.y = TRUE)
+    err[met] = with(yp, logLoss(y, prob))
+    
+}
+
+#########################################################################
+write.table(err, file = 'proj_3.csv', sep = ',', row.names = FALSE,
+            col.names = FALSE)
+write.table(run.time, file = 'proj_3.csv', sep = ',', 
+            row.names = FALSE, col.names = FALSE, append = TRUE)
+
+</pre>
+
+
+ If you want to use both R and Python to build different models, please
+ submit two sets of code (name your main python file as
+ <b>mymain.py</b>). And also indicate in your report that you are
+ using both R and Python. <br><br></dd>
+
+</dl>
+
+
+
+
+
+</div>
+<hr />
+
+
